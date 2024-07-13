@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenTrack: Meditation Tracker</title>
+    <style>
+           /* Your CSS styles */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --primary-color: #3498db;
+            --secondary-color: #e74c3c;
+        }
+
+        .dark-theme {
+            --bg-color: #333333;
+            --text-color: #ffffff;
+            --primary-color: #2980b9;
+            --secondary-color: #c0392b;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            margin: 0 auto;
+            transition: background-color 0.3s, color 0.3s;
+            max-width: 1000px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        #signOutBtn {
+            background-color: var(--secondary-color);
+        }
+
+        input, select, textarea {
+            margin-bottom: 10px;
+            padding: 5px;
+            width: 100%;
+        }
+
+        .progress-dials {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .dial-container {
+            text-align: center;
+        }
+
+        .dial {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .dial-bg, .dial-progress {
+            fill: none;
+            stroke: #ddd;
+            stroke-width: 10;
+        }
+
+        .dial-progress {
+            stroke: var(--primary-color);
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dasharray 0.3s;
+        }
+
+        .dial-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            transition: display 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: var(--bg-color);
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid var(--primary-color);
+            width: 80%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .close {
+            color: var(--secondary-color);
+            position: absolute;
+            top: 10px;
+            right: 25px;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            position: relative;
+            background-color: var(--bg-color);
+            border: 1px solid var(--primary-color);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            flex: 1;
+            min-width: 200px;
+            max-width: 300px;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: auto 1fr auto;
+            gap: 10px;
+            align-items: start;
+        }
+
+        .large-card {
+            flex: 2;
+            position: relative;
+        }
+
+        #sessionHistory {
+            margin-top: 20px;
+        }
+
+        .session-entry {
+            background-color: rgba(52, 152, 219, 0.1);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .session-note {
+            width: 100%;
+            min-height: 60px;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            padding: 5px;
+        }
+
+        .delete-btn, .save-note-btn {
+            padding: 5px 10px;
+            margin-right: 5px;
+        }
+
+        .delete-btn {
+            background-color: var(--secondary-color);
+        }
+
+        #sessionControls {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button#startSession, button#stopSession {
+            margin-top: 60px;
+        }
+
+        #sessionMedia, #sessionMediaPlaylist {
+            margin-top: 20px;
+        }
+
+        .tag {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+
+        .toast {
+            visibility: hidden;
+            min-width: 250px;
+            margin-left: -125px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 2px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            font-size: 17px;
+        }
+
+        .toast.show {
+            visibility: visible;
+            -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+
+        .toast.success {
+            background-color: #4CAF50;
+        }
+
+        .toast.error {
+            background-color: #f44336;
+        }
+
+        .toast.info {
+            background-color: #2196F3;
+        }
+
+        .toast.warning {
+            background-color: #ff9800;
+        }
+
+        .alert-toast .ok-btn, .alert-toast .cancel-btn {
+            padding: 5px 10px;
+            margin: 5px;
+        }
+
+        .alert-toast .ok-btn {
+            background-color: var(--secondary-color);
+        }
+
+        @-webkit-keyframes fadein {
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 30px; opacity: 1; }
+        }
+
+        @keyframes fadein {
+            from { bottom: 0; opacity: 0; }
+            to { bottom: 30px; opacity: 1; }
+        }
+
+        @-webkit-keyframes fadeout {
+            from { bottom: 30px; opacity: 1; }
+            to { bottom: 0; opacity: 0; }
+        }
+
+        @keyframes fadeout {
+            from { bottom: 30px; opacity: 1; }
+            to { bottom: 0; opacity: 0; }
+        }
+
+        .label {
+            position: absolute;
+            top: 10px;
+            left: 35%;
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+
+        #daysRemaining, #todayDay, #totalDuration {
+            font-size: 8rem;
+          font-weight:bold;
+          text-stroke:1px #333
+            text-align: center;
+            margin: 0;
+            color: var(--primary-color);
+        }
+
+        .playlist-categories {
+            display: flex;
+            gap: 20px;
+        }
+
+        .playlist-category {
+            flex: 1;
+        }
+
+        .playlist-category ol {
+            list-style-type: decimal;
+            padding: 0;
+        }
+
+        .playlist-category li {
+            background-color: rgba(52, 152, 219, 0.1);
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .remove-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+
+        .media-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .embed-section, .playlist-section {
+            width: 100%;
+        }
+
+        .embed-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .embed-input input {
+            flex-grow: 1;
+        }
+
+        .embedded-media {
+            width: 100%;
+            min-height: 315px;
+            border: 1px solid #ccc;
+        }
+
+        .playlist {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .playlist-column {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .playlist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 5px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+
+        .playlist-item img {
+            width: 60px;
+            height: 45px;
+            object-fit: cover;
+        }
+
+        .playlist-item button {
+            margin-left: auto;
+        }
+
+        @media (min-width: 768px) {
+            .media-container {
+                flex-direction: row;
+            }
+
+          
+            .embed-section, .playlist-section {
+                width: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ZenTrack</h1>
+        <div class="header-buttons">
+            <button id="themeToggle">Toggle Theme</button>
+            <button id="signOutBtn">Sign Out</button>
+        </div>
+    </header>
+
+    <div id="mandalCreation">
+        <h2>Create New Mandal</h2>
+        <label for="userName">User Name:</label>
+        <input type="text" id="userName" required>
+        <label for="mandalName">Mandal Name:</label>
+        <input type="text" id="mandalNameInput" required>
+        <label for="mandalChoice">Select Duration:</label>
+        <select id="mandalChoice" required>
+            <option value="48">48 Days / 96 Sessions</option>
+            <option value="90">90 Days / 90 Sessions</option>
+        </select>
+        <label for="mandalStartDate">Start Date:</label>
+        <input type="date" id="mandalStartDateInput" required>
+        <button id="createMandalBtn">Start Mandal</button>
+    </div>
+
+    <div id="mandalInfo" style="display:none;">
+        <div class="card-container">
+            <div class="card">
+                <h2>Active Mandal: <span id="mandalName"></span></h2>
+            </div>
+            <div class="card large-card">
+                <div class="label">Mandal Duration:</div>
+                <span id="totalDuration"></span>
+            </div>
+            <div class="card">
+                <p>Start Date: <span id="startDate"></span></p>
+            </div>
+            <div class="card">
+                <p>End Date: <span id="endDate"></span></p>
+            </div>
+            <div class="card large-card">
+                <div class="label">Days Remaining:</div>
+                <div class="value" id="daysRemaining"></div>
+            </div>
+            <div class="card">
+                <div class="label">Day Today:</div>
+                <span id="todayDay"></span>
+            </div>
+            <div class="card">
+                <button id="deleteMandalBtn">Delete Mandal</button>
+            </div>
+            <div class="card">
+                <button id="openPastSessionModal">Add Past Session</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-dials">
+        <div class="dial-container">
+            <div class="dial">
+                <svg viewBox="0 0 100 100">
+                    <circle class="dial-bg" cx="50" cy="50" r="45"/>
+                    <circle id="mandalProgressDial" class="dial-progress" cx="50" cy="50" r="45"/>
+                </svg>
+                <div id="mandalProgressText" class="dial-text">0%</div>
+            </div>
+            <p>Mandal Progress</p>
+        </div>
+        <div class="dial-container">
+            <div class="dial">
+                <svg viewBox="0 0 100 100">
+                    <circle class="dial-bg" cx="50" cy="50" r="45"/>
+                    <circle id="dailyProgressDial" class="dial-progress" cx="50" cy="50" r="45"/>
+                </svg>
+                <div id="dailyProgressText" class="dial-text">0%</div>
+            </div>
+            <p>Daily Progress</p>
+        </div>
+        <div class="dial-container">
+            <div class="dial">
+                <svg viewBox="0 0 100 100">
+                    <circle class="dial-bg" cx="50" cy="50" r="45"/>
+                    <circle id="sessionProgressDial" class="dial-progress" cx="50" cy="50" r="45"/>
+                </svg>
+                <div id="sessionProgressText" class="dial-text">0:00</div>
+            </div>
+            <p>Session Progress</p>
+        </div>
+    </div>
+
+    <div id="sessionControls">
+        <button id="startSession">Start Session</button>
+        <button id="stopSession" style="display:none;">Stop Session</button>
+    </div>
+
+    <div id="sessionMedia" class="card">
+        <h3>Meditation Media</h3>
+        <div class="embed-input">
+            <input type="text" id="mediaUrl" placeholder="Enter YouTube or SoundCloud URL">
+            <button id="embedMediaBtn">Embed Media</button>
+        </div>
+        <div id="embeddedMedia" class="embedded-media"></div>
+    </div>
+
+    <div id="sessionMediaPlaylist" class="card">
+        <h3>My Meditation Playlist</h3>
+        <div class="playlist">
+            <div class="playlist-column">
+                <h4>YouTube</h4>
+                <div id="youtubePlaylist"></div>
+            </div>
+            <div class="playlist-column">
+                <h4>SoundCloud</h4>
+                <div id="soundcloudPlaylist"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sessionHistory">
+        <h3>Session History</h3>
+        <div class="search-container">
+            <input type="text" id="searchNotes" placeholder="Search notes">
+            <button id="clearSearch" class="clear-btn">Clear</button>
+        </div>
+        <button id="sortDateAsc">Sort by Date Ascending</button>
+        <button id="sortDateDesc">Sort by Date Descending</button>
+        <button id="sortByNotes">Sort by Notes</button>
+        <div id="sessionList"></div>
+    </div>
+
+    <div id="addPastSessionModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Add Past Session</h3>
+            <input type="date" id="pastDate" required>
+            <input type="number" id="pastDuration" placeholder="Duration (minutes)" value="14" required>
+            <input type="number" id="pastSeconds" placeholder="Duration (seconds)" value="33" required>
+            <label><input type="checkbox" id="pastMorning"> Morning</label>
+            <label><input type="checkbox" id="pastEvening"> Evening</label>
+            <textarea id="pastReflection" placeholder="Reflection (optional)"></textarea>
+            <button id="addPastSessionBtn">Add Past Session</button>
+        </div>
+    </div>
+
+   <script>
+document.addEventListener('DOMContentLoaded', () => {
+    function getDOMElements() {
+        const elements = {
+            inputs: {
+                userName: document.getElementById('userName'),
+                mandalName: document.getElementById('mandalNameInput'),
+                mandalChoice: document.getElementById('mandalChoice'),
+                mandalStartDate: document.getElementById('mandalStartDateInput')
+            },
+            buttons: {
+                createMandal: document.getElementById('createMandalBtn'),
+                deleteMandal: document.getElementById('deleteMandalBtn'),
+                startSession: document.getElementById('startSession'),
+                stopSession: document.getElementById('stopSession'),
+                addPastSession: document.getElementById('addPastSessionBtn'),
+                themeToggle: document.getElementById('themeToggle'),
+                signOut: document.getElementById('signOutBtn'),
+                embedMedia: document.getElementById('embedMediaBtn')
+            },
+            displays: {
+                mandalName: document.getElementById('mandalName'),
+                startDate: document.getElementById('startDate'),
+                endDate: document.getElementById('endDate'),
+                daysRemaining: document.getElementById('daysRemaining'),
+                todayDay: document.getElementById('todayDay'),
+                totalDuration: document.getElementById('totalDuration'),
+                sessionList: document.getElementById('sessionList'),
+                mandalProgressDial: document.getElementById('mandalProgressDial'),
+                mandalProgressText: document.getElementById('mandalProgressText'),
+                dailyProgressDial: document.getElementById('dailyProgressDial'),
+                dailyProgressText: document.getElementById('dailyProgressText'),
+                sessionProgressDial: document.getElementById('sessionProgressDial'),
+                sessionProgressText: document.getElementById('sessionProgressText'),
+                embeddedMediaContainer: document.getElementById('embeddedMedia'),
+                youtubePlaylist: document.getElementById('youtubePlaylist'),
+                soundcloudPlaylist: document.getElementById('soundcloudPlaylist'),
+                addPastSessionModal: document.getElementById('addPastSessionModal'),
+                openPastSessionModalBtn: document.getElementById('openPastSessionModal'),
+                closeModalBtn: document.getElementsByClassName('close')[0],
+                sortDateAscBtn: document.getElementById('sortDateAsc'),
+                sortDateDescBtn: document.getElementById('sortDateDesc'),
+                sortByNotesBtn: document.getElementById('sortByNotes'),
+                mediaUrlInput: document.getElementById('mediaUrl'),
+                searchNotesInput: document.getElementById('searchNotes'),
+                clearSearchBtn: document.getElementById('clearSearch')
+            }
+        };
+
+        // Check for null elements and log meaningful messages
+        for (const category in elements) {
+            for (const key in elements[category]) {
+                if (elements[category][key] === null) {
+                    console.error(`Element with ID '${key}' not found in the DOM`);
+                }
+            }
+        }
+
+        return elements;
+    }
+
+    const { inputs, buttons, displays } = getDOMElements();
+    let activeMandal = null;
+    let sessionStart = null;
+    let sessionInterval = null;
+
+    function initializeApp() {
+        loadMandal();
+        attachEventListeners();
+        updateUI();
+    }
+
+    function attachEventListeners() {
+        buttons.createMandal.addEventListener('click', createMandal);
+        buttons.deleteMandal.addEventListener('click', deleteMandal);
+        buttons.startSession.addEventListener('click', startSession);
+        buttons.stopSession.addEventListener('click', stopSession);
+        buttons.addPastSession.addEventListener('click', addPastSession);
+        buttons.themeToggle.addEventListener('click', toggleTheme);
+        buttons.signOut.addEventListener('click', signOut);
+        buttons.embedMedia.addEventListener('click', embedMedia);
+        displays.openPastSessionModalBtn.addEventListener('click', () => displays.addPastSessionModal.style.display = 'block');
+        displays.closeModalBtn.addEventListener('click', () => displays.addPastSessionModal.style.display = 'none');
+        window.addEventListener('click', (event) => {
+            if (event.target === displays.addPastSessionModal) {
+                displays.addPastSessionModal.style.display = 'none';
+            }
+        });
+        displays.sortDateAscBtn.addEventListener('click', () => sortSessions('asc'));
+        displays.sortDateDescBtn.addEventListener('click', () => sortSessions('desc'));
+        displays.sortByNotesBtn.addEventListener('click', () => sortSessions('notes'));
+        displays.clearSearchBtn.addEventListener('click', clearSearch);
+        displays.searchNotesInput.addEventListener('input', searchNotes);
+    }
+
+    function loadMandal() {
+        const storedMandal = localStorage.getItem('activeMandal');
+        if (storedMandal) {
+            activeMandal = JSON.parse(storedMandal);
+            document.getElementById('mandalCreation').style.display = 'none';
+            document.getElementById('mandalInfo').style.display = 'block';
+            showToast('Sessions found in local storage!', 'success');
+        } else {
+            document.getElementById('mandalCreation').style.display = 'block';
+            document.getElementById('mandalInfo').style.display = 'none';
+        }
+    }
+
+    function createMandal() {
+        const userName = inputs.userName.value;
+        const name = inputs.mandalName.value;
+        const choice = inputs.mandalChoice.value;
+        const duration = choice === '48' ? 48 : 90;
+        const sessions = choice === '48' ? 96 : 90;
+        const startDateValue = new Date(inputs.mandalStartDate.value);
+        createNewMandal(userName, name, duration, sessions, startDateValue);
+        updateUI();
+        showToast('Mandal created successfully!', 'success');
+    }
+
+    function createNewMandal(userName, name, duration, sessions, startDate) {
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + duration - 1);
+
+        activeMandal = {
+            userName: userName,
+            name: name,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+            duration: duration,
+            sessions: sessions,
+            completedSessions: 0,
+            sessionsDetails: []
+        };
+        saveMandal();
+    }
+
+    function saveMandal() {
+        localStorage.setItem('activeMandal', JSON.stringify(activeMandal));
+    }
+
+    function deleteMandal() {
+        showAlertToast('Are you sure you want to delete this mandal?', () => {
+            localStorage.removeItem('activeMandal');
+            activeMandal = null;
+            updateUI();
+            showToast('Mandal deleted successfully!', 'error');
+            document.getElementById('mandalCreation').style.display = 'block';
+            document.getElementById('mandalInfo').style.display = 'none';
+        });
+    }
+
+    function updateUI() {
+        if (!activeMandal) return;
+
+        displays.mandalName.textContent = activeMandal.name;
+        displays.startDate.textContent = new Date(activeMandal.startDate).toLocaleDateString();
+        displays.endDate.textContent = new Date(activeMandal.endDate).toLocaleDateString();
+        displays.totalDuration.textContent = activeMandal.duration;
+
+        const now = new Date();
+        const start = new Date(activeMandal.startDate);
+        const end = new Date(activeMandal.endDate);
+        const totalDays = (end - start) / (1000 * 60 * 60 * 24);
+        const elapsedDays = Math.min(totalDays, Math.max(0, (now - start) / (1000 * 60 * 60 * 24)));
+
+        displays.daysRemaining.textContent = Math.max(0, Math.ceil(totalDays - elapsedDays));
+        displays.todayDay.textContent = Math.ceil(elapsedDays);
+
+        updateProgressDial(displays.mandalProgressDial, displays.mandalProgressText, elapsedDays / totalDays);
+        updateDailyProgress();
+        renderSessionHistory();
+        showToast('Data from render function is now ready to display.', 'success');
+    }
+
+    function updateProgressDial(dialElement, textElement, progress) {
+        const circumference = 2 * Math.PI * 45;
+        dialElement.style.strokeDasharray = `${circumference} ${circumference}`;
+        dialElement.style.strokeDashoffset = circumference * (1 - progress);
+        textElement.textContent = `${Math.round(progress * 100)}%`;
+    }
+
+    function updateDailyProgress() {
+        const today = new Date().toDateString();
+        const todaySessions = activeMandal.sessionsDetails.filter(session => new Date(session.date).toDateString() === today);
+        const totalDuration = todaySessions.reduce((sum, session) => sum + session.duration, 0);
+        const dailyGoal = 30;
+        updateProgressDial(displays.dailyProgressDial, displays.dailyProgressText, Math.min(1, totalDuration / dailyGoal));
+    }
+
+    function renderSessionHistory() {
+        const searchValue = displays.searchNotesInput.value.trim().toLowerCase();
+        displays.sessionList.innerHTML = '';
+
+        const groupedSessions = groupSessionsByMonthAndWeek(activeMandal.sessionsDetails);
+
+        Object.entries(groupedSessions).forEach(([month, weeks]) => {
+            const monthElement = createCollapsibleElement(month, Object.values(weeks).flat().length);
+
+            Object.entries(weeks).forEach(([week, sessions]) => {
+                const weekElement = createCollapsibleElement(week, sessions.length);
+
+                sessions.filter(session => !searchValue || (session.reflection && session.reflection.toLowerCase().includes(searchValue)))
+                    .forEach((session, index) => {
+                        const sessionEntry = createSessionEntry(session, index);
+                        weekElement.appendChild(sessionEntry);
+                    });
+
+                monthElement.appendChild(weekElement);
+            });
+
+            displays.sessionList.appendChild(monthElement);
+        });
+
+        addEventListenersToButtons();
+    }
+
+    function groupSessionsByMonthAndWeek(sessions) {
+        const grouped = {};
+        sessions.forEach(session => {
+            const date = new Date(session.date);
+            const monthKey = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+            const weekKey = `Week ${getWeekNumber(date)}`;
+
+            if (!grouped[monthKey]) grouped[monthKey] = {};
+            if (!grouped[monthKey][weekKey]) grouped[monthKey][weekKey] = [];
+
+            grouped[monthKey][weekKey].push(session);
+        });
+        return grouped;
+    }
+
+    function getWeekNumber(date) {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
+
+    function createCollapsibleElement(title, count) {
+        const details = document.createElement('details');
+        const summary = document.createElement('summary');
+        summary.textContent = `${title} `;
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = count;
+        summary.appendChild(badge);
+        details.appendChild(summary);
+        return details;
+    }
+
+    function createSessionEntry(session, index) {
+        const sessionEntry = document.createElement('div');
+        sessionEntry.className = 'session-entry';
+        const tags = session.reflection ? session.reflection.split(' ')
+            .filter(word => word.startsWith('#'))
+            .map(tag => `<span class="tag">${tag}</span>`).join(' ') : '';
+
+        sessionEntry.innerHTML = `
+            <p>Date: ${new Date(session.date).toLocaleString()}</p>
+            <p>Duration: ${formatDuration(session.duration)}</p>
+            <p>Phase: ${session.phase}</p>
+            <div>${tags}</div>
+            <textarea class="session-note" data-index="${index}">${session.reflection || ''}</textarea>
+            <button class="save-note-btn" data-index="${index}">Save Note</button>
+            <button class="delete-btn" data-index="${index}">Delete Session</button>
+        `;
+        return sessionEntry;
+    }
+
+    function addEventListenersToButtons() {
+        document.querySelectorAll('.save-note-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => saveNote(parseInt(e.target.dataset.index)));
+        });
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => deleteSession(parseInt(e.target.dataset.index)));
+        });
+    }
+
+    function startSession() {
+        sessionStart = new Date();
+        buttons.startSession.style.display = 'none';
+        buttons.stopSession.style.display = 'inline-block';
+        sessionInterval = setInterval(updateSessionProgress, 1000);
+        showToast('Session started!', 'info');
+    }
+
+    function stopSession() {
+        clearInterval(sessionInterval);
+        const sessionEnd = new Date();
+        const duration = Math.round((sessionEnd - sessionStart) / 60000);
+
+        activeMandal.sessionsDetails.push({
+            date: sessionStart.toISOString(),
+            duration: duration,
+            phase: sessionStart.getHours() < 12 ? 'morning' : 'evening',
+            reflection: ''
+        });
+        activeMandal.completedSessions++;
+
+        saveMandal();
+        updateUI();
+        showToast('Session completed successfully!', 'success');
+
+        buttons.startSession.style.display = 'inline-block';
+        buttons.stopSession.style.display = 'none';
+        updateProgressDial(displays.sessionProgressDial, displays.sessionProgressText, 0);
+    }
+
+    function updateSessionProgress() {
+        const elapsed = (new Date() - sessionStart) / 60000;
+        const progress = Math.min(1, elapsed / 30);
+        updateProgressDial(displays.sessionProgressDial, displays.sessionProgressText, progress);
+        const minutes = Math.floor(elapsed);
+        const seconds = Math.floor((elapsed - minutes) * 60);
+        displays.sessionProgressText.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function addPastSession() {
+        const date = new Date(document.getElementById('pastDate').value);
+        const duration = parseInt(document.getElementById('pastDuration').value) * 60 + parseInt(document.getElementById('pastSeconds').value);
+        const phase = document.getElementById('pastMorning').checked ? 'morning' : 'evening';
+        const reflection = document.getElementById('pastReflection').value.trim();
+
+        activeMandal.sessionsDetails.push({
+            date: date.toISOString(),
+            duration: duration,
+            phase: phase,
+            reflection: reflection
+        });
+        activeMandal.completedSessions++;
+
+        saveMandal();
+        updateUI();
+        showToast('Past session added successfully!', 'success');
+
+        displays.addPastSessionModal.style.display = 'none';
+
+        document.getElementById('pastDate').value = '';
+        document.getElementById('pastDuration').value = 14;
+        document.getElementById('pastSeconds').value = 33;
+        document.getElementById('pastMorning').checked = false;
+        document.getElementById('pastEvening').checked = false;
+        document.getElementById('pastReflection').value = '';
+    }
+
+    function saveNote(index) {
+        const noteTextarea = document.querySelector(`.session-note[data-index="${index}"]`);
+        activeMandal.sessionsDetails[index].reflection = noteTextarea.value.trim();
+        saveMandal();
+        updateUI();
+        showToast('Note saved successfully!', 'success');
+    }
+
+    function deleteSession(index) {
+        showAlertToast('Are you sure you want to delete this session?', () => {
+            activeMandal.sessionsDetails.splice(index, 1);
+            saveMandal();
+            updateUI();
+            showToast('Session deleted successfully!', 'error');
+        });
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+        showToast('Theme toggled!', 'info');
+    }
+
+    function signOut() {
+        showToast('Sign out is not implemented yet!', 'warning');
+    }
+
+    function embedMedia() {
+        const url = displays.mediaUrlInput.value.trim();
+        if (url.includes('youtube.com') || url.includes('youtu.be')) {
+            embedYouTube(url);
+        } else if (url.includes('soundcloud.com')) {
+            embedSoundCloud(url);
+        } else {
+            showToast('Unsupported media URL!', 'error');
+        }
+    }
+
+    function embedYouTube(url) {
+        const videoId = extractYouTubeVideoId(url);
+        if (videoId) {
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://www.youtube.com/embed/${videoId}`;
+            iframe.width = '100%';
+            iframe.height = '315';
+            iframe.frameBorder = '0';
+            iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+            iframe.allowFullscreen = true;
+            displays.embeddedMediaContainer.innerHTML = '';
+            displays.embeddedMediaContainer.appendChild(iframe);
+            addToPlaylist('youtube', url, videoId);
+        } else {
+            showToast('Invalid YouTube URL!', 'error');
+        }
+    }
+
+    function embedSoundCloud(url) {
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}`;
+        iframe.width = '100%';
+        iframe.height = '166';
+        iframe.frameBorder = '0';
+        iframe.allow = 'autoplay';
+        displays.embeddedMediaContainer.innerHTML = '';
+        displays.embeddedMediaContainer.appendChild(iframe);
+        addToPlaylist('soundcloud', url);
+    }
+
+    function extractYouTubeVideoId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    function addToPlaylist(type, url, videoId = null) {
+        const playlistItem = document.createElement('div');
+        playlistItem.className = 'playlist-item';
+
+        const removeButton = document.createElement('button');
+        removeButton.textContent = 'Remove';
+        removeButton.addEventListener('click', () => removeFromPlaylist(playlistItem, type));
+
+        if (type === 'youtube') {
+            playlistItem.innerHTML = `
+                <img src="https://img.youtube.com/vi/${videoId}/default.jpg" alt="Thumbnail">
+                <span>${url}</span>
+            `;
+            playlistItem.appendChild(removeButton);
+            displays.youtubePlaylist.appendChild(playlistItem);
+        } else {
+            playlistItem.innerHTML = `
+                <img src="/api/placeholder/60/45" alt="SoundCloud">
+                <span>${url}</span>
+            `;
+            playlistItem.appendChild(removeButton);
+            displays.soundcloudPlaylist.appendChild(playlistItem);
+        }
+    }
+
+    function removeFromPlaylist(playlistItem, type) {
+        if (type === 'youtube') {
+            displays.youtubePlaylist.removeChild(playlistItem);
+        } else {
+            displays.soundcloudPlaylist.removeChild(playlistItem);
+        }
+
+        const removedUrl = playlistItem.querySelector('span').textContent;
+        const currentEmbedSrc = displays.embeddedMediaContainer.querySelector('iframe')?.src;
+        if (currentEmbedSrc && currentEmbedSrc.includes(extractYouTubeVideoId(removedUrl))) {
+            displays.embeddedMediaContainer.innerHTML = '';
+        }
+    }
+
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }, 100);
+    }
+
+    function showAlertToast(message, onConfirm) {
+        const toast = document.createElement('div');
+        toast.className = `toast alert-toast`;
+        toast.innerHTML = `
+            <p>${message}</p>
+            <button class="ok-btn">OK</button>
+            <button class="cancel-btn">Cancel</button>
+        `;
+        document.body.appendChild(toast);
+        toast.querySelector('.ok-btn').addEventListener('click', () => {
+            onConfirm();
+            document.body.removeChild(toast);
+        });
+        toast.querySelector('.cancel-btn').addEventListener('click', () => {
+            document.body.removeChild(toast);
+        });
+        toast.classList.add('show');
+    }
+
+    function sortSessions(criteria) {
+        if (criteria === 'asc') {
+            activeMandal.sessionsDetails.sort((a, b) => new Date(a.date) - new Date(b.date));
+        } else if (criteria === 'desc') {
+            activeMandal.sessionsDetails.sort((a, b) => new Date(b.date) - new Date(a.date));
+        } else if (criteria === 'notes') {
+            activeMandal.sessionsDetails.sort((a, b) => (b.reflection ? 1 : 0) - (a.reflection ? 1 : 0));
+        }
+        renderSessionHistory();
+        showToast(`Sessions sorted by ${criteria}`, 'info');
+    }
+
+    function formatDuration(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes} mins ${remainingSeconds} secs`;
+    }
+
+    function searchNotes() {
+        renderSessionHistory();
+    }
+
+    function clearSearch() {
+        displays.searchNotesInput.value = '';
+        renderSessionHistory();
+    }
+
+    initializeApp();
+});
+</script>
+
+</body>
+</html>
